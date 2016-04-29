@@ -65,7 +65,7 @@ Function Get-TestResultObject()
     #If no passed, failed, warning, or info items exist the test likely had an unexpected error.
     if (-not $PassedList -and -not $FailedList -and -not $WarningList -and -not $InfoList)
     {
-        $TestComments = "Test could not run."
+        $TestComments = "Test $($TestID) could not run."
         $TestOutcome = "Warning"
     }
 
