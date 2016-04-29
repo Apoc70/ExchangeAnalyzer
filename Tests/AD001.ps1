@@ -16,8 +16,11 @@ Function Run-AD001()
     # Domain Check - Current Forest
     $Domains = @()
     $Forest = @()
-    $Domains = @((get-adforest).domains)
-    $Forest = @((get-adforest).name)
+    # 2016-04-29 try/catch added to smoothen test, Thomas Stensitzki
+    try { $Domains = @((get-adforest ).domains) }
+    catch {$Domains = @()}
+    try { $Forest = @((get-adforest).name) }
+    catch { $Forest = @() }
     $AllDomains = $domains
     $AllForests = $forest
 

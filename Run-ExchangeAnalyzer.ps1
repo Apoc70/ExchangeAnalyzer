@@ -191,9 +191,6 @@ if ($FileName) {
 #Collect information about the Exchange organization, databases, DAGs, and servers to be
 #re-used throughout the script.
 
-#publish this for use by anyone
-$global:ExAPropertyBag = @{}
-
 $ProgressActivity = "Initializing"
 
 $msgString = "Collecting data about the Exchange organization"
@@ -206,7 +203,8 @@ try
     $ExchangeOrganization = Get-OrganizationConfig -ErrorAction STOP
     
     Write-Progress -Activity $ProgressActivity -Status "Get-ExchangeServer" -PercentComplete 1
-    $ExchangeServersAll = @(Get-ExchangeServer -ErrorAction STOP)
+    # 2016-04-29 Sorting added, Thomas Stensitzki
+    $ExchangeServersAll = @(Get-ExchangeServer -ErrorAction STOP | Sort-Object )
     $ExchangeServers = @($ExchangeServersAll | Where {$_.AdminDisplayVersion -like "Version 15.*"})
     Write-Verbose "$($ExchangeServers.Count) Exchange servers found."
 
@@ -218,7 +216,8 @@ try
     }
 
     Write-Progress -Activity $ProgressActivity -Status "Get-MailboxDatabase" -PercentComplete 2
-    $ExchangeDatabases = @(Get-MailboxDatabase -Status -ErrorAction STOP)
+    # 2016-04-29 Sorting added, Thomas Stensitzki
+    $ExchangeDatabases = @(Get-MailboxDatabase -Status -ErrorAction STOP | Sort-Object)
     Write-Verbose "$($ExchangeDatabases.Count) databases found."
 
     #Do not use -Status switch here as it causes an error to be thrown. DAG status should be
@@ -227,27 +226,22 @@ try
     $ExchangeDAGs = @(Get-DatabaseAvailabilityGroup -ErrorAction STOP)
     Write-Verbose "$($ExchangeDAGs.Count) DAGs found."
 
-    Write-Progress -Activity $ProgressActivity -Status 'Exchange Registry Settings' -PercentComplete 2
-    foreach ($s in $ExchangeServers)
-    {
-        Set-ExAServerProperty -Server $s.Name -Property 'ExchangeInstallPath' -Value (Get-ExARegistryValue -Host $s.Name -Hive LocalMachine -Key 'SOFTWARE\Microsoft\ExchangeServer\V15\Setup' -Value 'MsiInstallPath')
-    }
-
     Write-Progress -Activity $ProgressActivity -Status "Get-ADDomain" -PercentComplete 3
-    $ADDomain = Get-ADDomain -ErrorAction STOP
+    $ADDomain = Get-ADDomain # 2016-04-29 -ErrorAction STOP removed, Thomas Stensitzki
  
     Write-Progress -Activity $ProgressActivity -Status "Get-ADForest" -PercentComplete 3
-    $ADForest = Get-ADForest -ErrorAction STOP
+    $ADForest = Get-ADForest # 2016-04-29 -ErrorAction STOP removed, Thomas Stensitzki
  
     Write-Progress -Activity $ProgressActivity -Status "Get-ADDomainController" -PercentComplete 3
-    $ADDomainControllers = @(Get-ADDomainController -filter * -ErrorAction STOP)
+    $ADDomainControllers = @(Get-ADDomainController -filter * ) # 2016-04-29 -ErrorAction STOP removed, Thomas Stensitzki
     Write-Verbose "$($ADDomainControllers.Count) Domain Controller(s) found."
 }
 catch
 {
-    Write-Warning "An error has occurred during basic data collection."
+    # 2016-04-29 Warning edited and EXIT commented, Thomas Stensitzki
+    Write-Warning "An error has occurred during basic data collection. Some test might not work as expected."
     Write-Warning $_.Exception.Message
-    EXIT
+    #EXIT
 }
 
 #Get all Exchange HTTPS URLs to use for CAS tests
@@ -349,16 +343,16 @@ $IntroHtml="<h1>Exchange Analyzer Report</h1>
             </p>"
 
 #Count of test results
-$PassedItems = @($report | Where {$_.TestOutcome -eq "Passed"})
+$PassedItems = @($report | Where {$_.TestOutcome -eq "Passed"} )
 $TotalPassed = $PassItems.Count
 
-$WarningItems = @($report | Where {$_.TestOutcome -eq "Warning"})
+$WarningItems = @($report | Where {$_.TestOutcome -eq "Warning"} )
 $TotalWarning = $WarningItems.Count
 
-$FailedItems = @($report | Where {$_.TestOutcome -eq "Failed"})
+$FailedItems = @($report | Where {$_.TestOutcome -eq "Failed"} )
 $TotalFailed = $FailedItems.Count
 
-$InfoItems = @($report | Where {$_.TestOutcome -eq "Info"})
+$InfoItems = @($report | Where {$_.TestOutcome -eq "Info"} )
 $TotalInfo = $InfoItems.Count
 
 #HTML summary table

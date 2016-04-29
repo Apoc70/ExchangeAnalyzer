@@ -16,9 +16,11 @@ Function Run-AD002()
     # Domain Check - Current Forest
     $Domains = @()
     $Forest = @()
-    $Domains = @((get-adforest).domains)
-    $Forest = @((get-adforest).name)
-    $AllDomains = $domains
+    # 2016-04-29 try/catch added to smoothen test, Thomas Stensitzki
+    try { $Domains = @((get-adforest ).domains) }
+    catch {$Domains = @()}
+    try { $Forest = @((get-adforest).name) }
+    catch { $Forest = @() }    $AllDomains = $domains
     $AllForests = $forest
 
     # Check for other forest domains (via trusts)
